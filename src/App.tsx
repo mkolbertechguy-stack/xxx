@@ -2,57 +2,56 @@ import React, { useState } from 'react';
 import CircleDiagram, { CircleDiagramItem } from './components/CircleDiagram';
 import './App.css';
 
-// Demo data sets with varying numbers of items and label lengths
+// Demo data sets showcasing various use cases and label lengths
 const demoDataSets: { [key: string]: CircleDiagramItem[] } = {
-  'Technology Trends (5 items)': [
+  'Technology Trends (5 items) - Matches Mockup': [
     { id: '1', label: 'Renewable energies and charging infrastructure' },
     { id: '2', label: 'Digital Transformation' },
     { id: '3', label: 'Robotics' },
     { id: '4', label: 'Bio technology' },
     { id: '5', label: 'Future mobility and autonomous driving' }
   ],
-  'Simple Example (3 items)': [
+  'Short Labels (3 items)': [
     { id: '1', label: 'AI' },
-    { id: '2', label: 'Machine Learning' },
-    { id: '3', label: 'Data Science' }
+    { id: '2', label: 'ML' },
+    { id: '3', label: 'Data' }
   ],
-  'Business Areas (6 items)': [
-    { id: '1', label: 'Marketing and Customer Acquisition' },
+  'Mixed Length Labels (6 items)': [
+    { id: '1', label: 'Marketing and Customer Acquisition Strategies' },
     { id: '2', label: 'Product Development' },
     { id: '3', label: 'Sales' },
-    { id: '4', label: 'Operations' },
-    { id: '5', label: 'Human Resources' },
-    { id: '6', label: 'Finance and Accounting' }
+    { id: '4', label: 'Operations Management' },
+    { id: '5', label: 'HR' },
+    { id: '6', label: 'Financial Planning and Analysis' }
   ],
-  'Project Phases (8 items)': [
-    { id: '1', label: 'Requirements Analysis' },
-    { id: '2', label: 'System Design' },
-    { id: '3', label: 'Implementation' },
-    { id: '4', label: 'Testing and Quality Assurance' },
-    { id: '5', label: 'Deployment' },
-    { id: '6', label: 'Monitoring' },
-    { id: '7', label: 'Maintenance' },
-    { id: '8', label: 'Documentation and Knowledge Transfer' }
+  'Long Labels (7 items)': [
+    { id: '1', label: 'Comprehensive Requirements Analysis and Documentation' },
+    { id: '2', label: 'System Architecture Design and Planning' },
+    { id: '3', label: 'Implementation and Development Phase' },
+    { id: '4', label: 'Testing, Quality Assurance, and Validation' },
+    { id: '5', label: 'Deployment and Production Release' },
+    { id: '6', label: 'Monitoring and Performance Analysis' },
+    { id: '7', label: 'Maintenance and Continuous Improvement' }
   ],
-  'Minimal (2 items)': [
-    { id: '1', label: 'Option A' },
-    { id: '2', label: 'Option B' }
+  'Dense Layout (9 items)': [
+    { id: '1', label: 'Strategy' },
+    { id: '2', label: 'Planning' },
+    { id: '3', label: 'Design' },
+    { id: '4', label: 'Development' },
+    { id: '5', label: 'Testing' },
+    { id: '6', label: 'Deployment' },
+    { id: '7', label: 'Monitoring' },
+    { id: '8', label: 'Optimization' },
+    { id: '9', label: 'Maintenance' }
   ],
-  'Maximum (9 items)': [
-    { id: '1', label: 'First' },
-    { id: '2', label: 'Second' },
-    { id: '3', label: 'Third' },
-    { id: '4', label: 'Fourth' },
-    { id: '5', label: 'Fifth' },
-    { id: '6', label: 'Sixth' },
-    { id: '7', label: 'Seventh' },
-    { id: '8', label: 'Eighth' },
-    { id: '9', label: 'Ninth' }
+  'Minimal Configuration (2 items)': [
+    { id: '1', label: 'Primary Option with Detailed Description' },
+    { id: '2', label: 'Alternative Solution Approach' }
   ]
 };
 
 const App: React.FC = () => {
-  const [selectedDataSet, setSelectedDataSet] = useState<string>('Technology Trends (5 items)');
+  const [selectedDataSet, setSelectedDataSet] = useState<string>('Technology Trends (5 items) - Matches Mockup');
   const [customItems, setCustomItems] = useState<string>('');
   const [useCustom, setUseCustom] = useState<boolean>(false);
 

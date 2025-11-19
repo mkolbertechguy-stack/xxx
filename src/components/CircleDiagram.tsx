@@ -4,7 +4,10 @@ import {
   calculateSmallCircleRadius,
   calculateCirclePositions,
   calculateTextPosition,
-  TextPosition
+  calculateFontSizes,
+  calculateEnhancedTextPosition,
+  TextPosition,
+  CirclePosition
 } from '../utils/geometry';
 
 export interface CircleDiagramItem {
@@ -25,11 +28,36 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
   height = 1080,
   className = ''
 }) => {
-  // Validate item count
+  // Validate item count with professional error display
   if (items.length < 2 || items.length > 9) {
     return (
-      <div className={`circle-diagram-error ${className}`}>
-        <p>Error: Circle diagram supports 2-9 items. Current count: {items.length}</p>
+      <div className={`circle-diagram ${className}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: height }}>
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          <rect width={width} height={height} fill="#f8f9fa" stroke="#e9ecef" strokeWidth="2" rx="8" />
+          <text
+            x={width / 2}
+            y={height / 2 - 20}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#6c757d"
+            fontSize="24"
+            fontWeight="500"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            Invalid Configuration
+          </text>
+          <text
+            x={width / 2}
+            y={height / 2 + 20}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#868e96"
+            fontSize="16"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            Circle diagram supports 2-9 items. Current count: {items.length}
+          </text>
+        </svg>
       </div>
     );
   }
@@ -48,10 +76,20 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
     items.length
   );
 
-  // Calculate text positions for each circle
-  const textPositions: TextPosition[] = circlePositions.map(circle =>
-    calculateTextPosition(circle.center, smallRadius, circle.angle)
-  );
+  // Calculate enhanced text positions with multi-line support and collision avoidance
+  const enhancedTextData = items.map((item, index) => {
+    const circle = circlePositions[index];
+    return calculateEnhancedTextPosition(
+      circle.center,
+      smallRadius,
+      circle.angle,
+      item.label,
+      items.length,
+      width,
+      height,
+      circlePositions
+    );
+  });
 
   return (
     <div className={`circle-diagram ${className}`}>
@@ -59,74 +97,127 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        style={{ border: '1px solid #e0e0e0' }}
+        style={{ 
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          backgroundColor: '#ffffff'
+        }}
       >
-        {/* Large circle outline */}
+        {/* Background gradient */}
+        <defs>
+          <radialGradient id="backgroundGradient" cx="50%" cy="50%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#f8f9fa" />
+          </radialGradient>
+          <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.1)" />
+          </filter>
+        </defs>
+        
+        {/* Background */}
+        <rect width={width} height={height} fill="url(#backgroundGradient)" rx="8" />
+        
+        {/* Large circle outline with enhanced styling */}
         <circle
           cx={centerX}
           cy={centerY}
           r={largeRadius}
           fill="none"
-          stroke="#333"
-          strokeWidth="2"
+          stroke="#495057"
+          strokeWidth="3"
+          strokeDasharray="none"
+          filter="url(#dropShadow)"
+          opacity="0.8"
         />
         
         {/* Small circles and labels */}
         {circlePositions.map((circle, index) => {
-          const textPos = textPositions[index];
+          const textData = enhancedTextData[index];
           const item = items[index];
+          const fontSizes = calculateFontSizes(smallRadius, item.label.length, width, items.length);
+          const fixedFontSize = 16; // Fixed font size as requested
+          const lineHeight = fixedFontSize * 1.2;
           
           return (
             <g key={item.id}>
-              {/* Small circle */}
+              {/* Drop shadow for small circle */}
+              <circle
+                cx={circle.center.x + 2}
+                cy={circle.center.y + 2}
+                r={smallRadius}
+                fill="rgba(0,0,0,0.1)"
+              />
+              
+              {/* Small circle with gradient */}
+              <defs>
+                <radialGradient id={`gradient-${index}`} cx="30%" cy="30%">
+                  <stop offset="0%" stopColor="#42A5F5" />
+                  <stop offset="100%" stopColor="#1976D2" />
+                </radialGradient>
+              </defs>
               <circle
                 cx={circle.center.x}
                 cy={circle.center.y}
                 r={smallRadius}
-                fill="#2196F3"
-                stroke="#1976D2"
+                fill={`url(#gradient-${index})`}
+                stroke="#1565C0"
                 strokeWidth="2"
               />
               
-              {/* Circle number */}
+              {/* Circle number with better typography */}
               <text
                 x={circle.center.x}
                 y={circle.center.y}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fill="white"
-                fontSize="16"
-                fontWeight="bold"
-                fontFamily="Arial, sans-serif"
+                fontSize={fontSizes.numberSize}
+                fontWeight="600"
+                fontFamily="system-ui, -apple-system, sans-serif"
+                style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
               >
                 {circle.number}
               </text>
               
-              {/* Text label */}
+              {/* Multi-line text label with fixed font size */}
               <text
-                x={textPos.point.x}
-                y={textPos.point.y}
-                textAnchor={textPos.anchor}
-                dominantBaseline="central"
-                fill="#333"
-                fontSize="14"
-                fontFamily="Arial, sans-serif"
+                x={textData.position.point.x}
+                y={textData.position.point.y - ((textData.lines.length - 1) * lineHeight) / 2}
+                textAnchor={textData.position.anchor}
+                fill="#2C3E50"
+                fontSize={fixedFontSize}
+                fontWeight="500"
+                fontFamily="system-ui, -apple-system, sans-serif"
+                style={{ 
+                  textShadow: '0 1px 1px rgba(255,255,255,0.8)',
+                  letterSpacing: '0.02em'
+                }}
               >
-                {item.label}
+                {textData.lines.map((line, lineIndex) => (
+                  <tspan
+                    key={lineIndex}
+                    x={textData.position.point.x}
+                    dy={lineIndex === 0 ? 0 : lineHeight}
+                  >
+                    {line}
+                  </tspan>
+                ))}
               </text>
             </g>
           );
         })}
         
-        {/* Debug info (optional - can be removed) */}
+        {/* Subtle branding/info */}
         <text
-          x="10"
-          y="30"
-          fill="#666"
-          fontSize="12"
-          fontFamily="Arial, sans-serif"
+          x={width - 10}
+          y={height - 15}
+          textAnchor="end"
+          fill="#adb5bd"
+          fontSize="11"
+          fontFamily="system-ui, -apple-system, sans-serif"
+          opacity="0.6"
         >
-          Items: {items.length} | Large radius: {Math.round(largeRadius)}px | Small radius: {Math.round(smallRadius)}px
+          {items.length} items • Circle Diagram Layout
         </text>
       </svg>
     </div>
