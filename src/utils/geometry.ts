@@ -41,7 +41,7 @@ export const radiansToDegrees = (radians: number): number => {
 export const calculateLargeCircleRadius = (
   canvasWidth: number,
   canvasHeight: number,
-  textPadding: number = 150 // Space reserved for text labels
+  textPadding: number = 200 // Increased space reserved for text labels
 ): number => {
   const availableWidth = canvasWidth - 2 * textPadding;
   const availableHeight = canvasHeight - 2 * textPadding;
@@ -188,4 +188,156 @@ export const calculateFontSizes = (
  */
 export const calculateSmallCircleRadius = (largeRadius: number): number => {
   return largeRadius / 4; // As specified: diameter = 1/4 of large circle diameter
+};
+
+/**
+ * Split text into multiple lines for better readability
+ */
+export const wrapText = (text: string, maxCharsPerLine: number = 25): string[] => {
+  if (text.length <= maxCharsPerLine) {
+    return [text];
+  }
+
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    
+    if (testLine.length <= maxCharsPerLine) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        // Single word is too long, split it
+        lines.push(word.substring(0, maxCharsPerLine));
+        currentLine = word.substring(maxCharsPerLine);
+      }
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+};
+
+/**
+ * Calculate text bounds to prevent screen overflow
+ */
+export const calculateTextBounds = (
+  textPosition: TextPosition,
+  textLines: string[],
+  fontSize: number,
+  canvasWidth: number,
+  canvasHeight: number
+): TextPosition => {
+  // Estimate text width (rough approximation)
+  const maxLineLength = Math.max(...textLines.map(line => line.length));
+  const estimatedTextWidth = maxLineLength * fontSize * 0.6; // Rough character width
+  const textHeight = textLines.length * fontSize * 1.2; // Line height
+  
+  let adjustedX = textPosition.point.x;
+  let adjustedY = textPosition.point.y;
+  
+  // Check horizontal bounds
+  if (textPosition.anchor === 'start') {
+    // Left-aligned text, check right boundary
+    if (adjustedX + estimatedTextWidth > canvasWidth - 20) {
+      adjustedX = canvasWidth - estimatedTextWidth - 20;
+    }
+  } else {
+    // Right-aligned text, check left boundary
+    if (adjustedX - estimatedTextWidth < 20) {
+      adjustedX = estimatedTextWidth + 20;
+    }
+  }
+  
+  // Check vertical bounds
+  const halfTextHeight = textHeight / 2;
+  if (adjustedY - halfTextHeight < 20) {
+    adjustedY = halfTextHeight + 20;
+  } else if (adjustedY + halfTextHeight > canvasHeight - 20) {
+    adjustedY = canvasHeight - halfTextHeight - 20;
+  }
+  
+  return {
+    ...textPosition,
+    point: { x: adjustedX, y: adjustedY }
+  };
+};
+
+/**
+ * Enhanced text positioning with collision avoidance and boundary checking
+ */
+export const calculateEnhancedTextPosition = (
+  circleCenter: Point,
+  smallCircleRadius: number,
+  angle: number,
+  labelText: string,
+  totalItems: number = 5,
+  canvasWidth: number = 1920,
+  canvasHeight: number = 1080,
+  allCirclePositions: CirclePosition[] = []
+): { position: TextPosition; lines: string[] } => {
+  // Get base text position
+  const basePosition = calculateTextPosition(
+    circleCenter,
+    smallCircleRadius,
+    angle,
+    labelText.length,
+    totalItems,
+    canvasWidth
+  );
+  
+  // Wrap text into multiple lines
+  const textLines = wrapText(labelText, 25);
+  
+  // Calculate font size (fixed size, no scaling)
+  const fontSize = 16; // Fixed font size as requested
+  
+  // Adjust position to prevent screen overflow
+  const adjustedPosition = calculateTextBounds(
+    basePosition,
+    textLines,
+    fontSize,
+    canvasWidth,
+    canvasHeight
+  );
+  
+  // Additional collision avoidance with other circles
+  let finalPosition = adjustedPosition;
+  
+  // Check for collisions with other circles and adjust if needed
+  for (const otherCircle of allCirclePositions) {
+    if (otherCircle.center.x === circleCenter.x && otherCircle.center.y === circleCenter.y) {
+      continue; // Skip self
+    }
+    
+    const distance = Math.sqrt(
+      Math.pow(finalPosition.point.x - otherCircle.center.x, 2) +
+      Math.pow(finalPosition.point.y - otherCircle.center.y, 2)
+    );
+    
+    // If text is too close to another circle, push it away
+    if (distance < smallCircleRadius * 2.5) {
+      const pushDirection = finalPosition.anchor === 'start' ? 1 : -1;
+      finalPosition = {
+        ...finalPosition,
+        point: {
+          x: finalPosition.point.x + (pushDirection * 30),
+          y: finalPosition.point.y
+        }
+      };
+    }
+  }
+  
+  return {
+    position: finalPosition,
+    lines: textLines
+  };
 };

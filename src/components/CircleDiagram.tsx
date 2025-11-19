@@ -5,7 +5,9 @@ import {
   calculateCirclePositions,
   calculateTextPosition,
   calculateFontSizes,
-  TextPosition
+  calculateEnhancedTextPosition,
+  TextPosition,
+  CirclePosition
 } from '../utils/geometry';
 
 export interface CircleDiagramItem {
@@ -74,16 +76,18 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
     items.length
   );
 
-  // Calculate text positions for each circle with enhanced spacing
-  const textPositions: TextPosition[] = circlePositions.map((circle, index) => {
-    const item = items[index];
-    return calculateTextPosition(
-      circle.center, 
-      smallRadius, 
+  // Calculate enhanced text positions with multi-line support and collision avoidance
+  const enhancedTextData = items.map((item, index) => {
+    const circle = circlePositions[index];
+    return calculateEnhancedTextPosition(
+      circle.center,
+      smallRadius,
       circle.angle,
-      item.label.length,
+      item.label,
       items.length,
-      width
+      width,
+      height,
+      circlePositions
     );
   });
 
@@ -128,9 +132,11 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
         
         {/* Small circles and labels */}
         {circlePositions.map((circle, index) => {
-          const textPos = textPositions[index];
+          const textData = enhancedTextData[index];
           const item = items[index];
           const fontSizes = calculateFontSizes(smallRadius, item.label.length, width, items.length);
+          const fixedFontSize = 16; // Fixed font size as requested
+          const lineHeight = fixedFontSize * 1.2;
           
           return (
             <g key={item.id}>
@@ -173,14 +179,13 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
                 {circle.number}
               </text>
               
-              {/* Text label with improved typography */}
+              {/* Multi-line text label with fixed font size */}
               <text
-                x={textPos.point.x}
-                y={textPos.point.y}
-                textAnchor={textPos.anchor}
-                dominantBaseline="central"
+                x={textData.position.point.x}
+                y={textData.position.point.y - ((textData.lines.length - 1) * lineHeight) / 2}
+                textAnchor={textData.position.anchor}
                 fill="#2C3E50"
-                fontSize={fontSizes.labelSize}
+                fontSize={fixedFontSize}
                 fontWeight="500"
                 fontFamily="system-ui, -apple-system, sans-serif"
                 style={{ 
@@ -188,7 +193,15 @@ const CircleDiagram: React.FC<CircleDiagramProps> = ({
                   letterSpacing: '0.02em'
                 }}
               >
-                {item.label}
+                {textData.lines.map((line, lineIndex) => (
+                  <tspan
+                    key={lineIndex}
+                    x={textData.position.point.x}
+                    dy={lineIndex === 0 ? 0 : lineHeight}
+                  >
+                    {line}
+                  </tspan>
+                ))}
               </text>
             </g>
           );
