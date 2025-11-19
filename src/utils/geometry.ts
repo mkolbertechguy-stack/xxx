@@ -17,6 +17,7 @@ export interface TextPosition {
   point: Point;
   anchor: 'start' | 'end'; // SVG text-anchor values
   alignment: 'left' | 'right';
+  offset: number;
 }
 
 /**
@@ -76,14 +77,43 @@ export const calculateCirclePositions = (
 };
 
 /**
- * Calculate text label position based on circle position and radial angle
+ * Calculate optimal text offset based on label characteristics and layout density
+ */
+export const calculateTextOffset = (
+  labelLength: number,
+  smallCircleRadius: number,
+  totalItems: number,
+  canvasWidth: number
+): number => {
+  // Base offset from circle edge
+  const baseOffset = Math.max(15, smallCircleRadius * 0.2);
+  
+  // Scale with canvas size for better proportions
+  const scaleOffset = canvasWidth / 120; // Responsive to canvas size
+  
+  // Additional spacing for longer labels to prevent crowding
+  const lengthFactor = Math.min(labelLength / 25, 1.5);
+  
+  // Increase spacing when there are more items to prevent overlaps
+  const densityFactor = Math.max(1, totalItems / 6);
+  
+  return Math.round(baseOffset + scaleOffset + (lengthFactor * 8) + (densityFactor * 5));
+};
+
+/**
+ * Calculate text label position based on circle position and radial angle with enhanced spacing
  */
 export const calculateTextPosition = (
   circleCenter: Point,
   smallCircleRadius: number,
   angle: number,
-  textOffset: number = 15
+  labelLength: number = 10,
+  totalItems: number = 5,
+  canvasWidth: number = 1920
 ): TextPosition => {
+  // Calculate dynamic text offset
+  const textOffset = calculateTextOffset(labelLength, smallCircleRadius, totalItems, canvasWidth);
+  
   // Normalize angle to 0-2π range
   const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
   
@@ -92,6 +122,19 @@ export const calculateTextPosition = (
   
   // Determine if we're on the right side (0° to 180°) or left side (180° to 360°)
   const isRightSide = degrees >= 0 && degrees <= 180;
+  
+  // Fine-tune positioning for better visual balance
+  let adjustedY = circleCenter.y;
+  
+  // For circles near the top/bottom, adjust positioning slightly to avoid crowding
+  const isNearTop = degrees >= 315 || degrees <= 45;
+  const isNearBottom = degrees >= 135 && degrees <= 225;
+  
+  if (isNearTop) {
+    adjustedY -= 3; // Move text slightly up for top positions
+  } else if (isNearBottom) {
+    adjustedY += 3; // Move text slightly down for bottom positions
+  }
   
   let textX: number;
   let anchor: 'start' | 'end';
@@ -109,13 +152,34 @@ export const calculateTextPosition = (
     alignment = 'right';
   }
   
-  // Vertically center the text with the circle
-  const textY = circleCenter.y;
+  return {
+    point: { x: textX, y: adjustedY },
+    anchor,
+    alignment,
+    offset: textOffset
+  };
+};
+
+/**
+ * Calculate responsive font sizes based on circle size and label characteristics
+ */
+export const calculateFontSizes = (
+  smallCircleRadius: number,
+  labelLength: number,
+  canvasWidth: number,
+  totalItems: number
+): { labelSize: number; numberSize: number } => {
+  // Base font sizes scaled to canvas
+  const baseLabelSize = Math.max(12, Math.min(18, canvasWidth / 110));
+  const baseNumberSize = Math.max(14, Math.min(22, smallCircleRadius / 4.5));
+  
+  // Adjust label size based on length and density
+  const lengthAdjustment = Math.max(0.75, 1 - (labelLength - 20) / 60);
+  const densityAdjustment = Math.max(0.9, 1 - (totalItems - 5) / 20);
   
   return {
-    point: { x: textX, y: textY },
-    anchor,
-    alignment
+    labelSize: Math.round(baseLabelSize * lengthAdjustment * densityAdjustment),
+    numberSize: Math.round(baseNumberSize)
   };
 };
 

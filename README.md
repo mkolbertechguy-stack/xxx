@@ -133,16 +133,16 @@ interface CircleDiagramItem {
 
 ## Demo Examples
 
-The application includes several demo datasets:
+The application includes comprehensive demo scenarios showcasing various use cases:
 
-1. **Technology Trends (5 items)** - Mixed length labels
-2. **Simple Example (3 items)** - Short labels
-3. **Business Areas (6 items)** - Medium length labels  
-4. **Project Phases (8 items)** - Long descriptive labels
-5. **Minimal (2 items)** - Minimum supported count
-6. **Maximum (9 items)** - Maximum supported count
+1. **Technology Trends (5 items)** - Matches the original mockup exactly with realistic tech labels
+2. **Short Labels (3 items)** - Minimal configuration with concise labels
+3. **Mixed Length Labels (6 items)** - Variety in label lengths testing text positioning
+4. **Long Labels (7 items)** - Complex project phase names testing collision handling
+5. **Dense Layout (9 items)** - Maximum capacity with development lifecycle phases
+6. **Minimal Configuration (2 items)** - Edge case testing with basic setup
 
-You can also test with custom items using the interactive form.
+Each scenario demonstrates different aspects of the layout algorithm and text positioning logic. You can also test with custom items using the interactive form.
 
 ## Technical Implementation Details
 
@@ -162,10 +162,18 @@ You can also test with custom items using the interactive form.
 
 ### Styling Approach
 
-- Clean, professional appearance
-- Blue circles (#2196F3) with white numbers
-- Subtle borders and shadows
-- Responsive design for different screen sizes
+- **Professional Visual Design**: Modern gradient backgrounds with subtle shadows
+- **Color Consistency**: Unified blue gradient theme (#2196F3 to #1976D2)
+- **Typography Hierarchy**: Responsive font sizing with proper visual hierarchy
+- **Interactive Elements**: Enhanced focus states and hover effects
+- **Brand Integration**: Subtle branding footer with professional presentation
+
+### Enhanced Layout Decisions
+
+- **Dynamic Text Positioning**: Intelligent offset calculation based on circle count
+- **Collision Avoidance**: Smart spacing prevents text overlap in dense configurations
+- **Responsive Sizing**: Text and elements scale appropriately for different scenarios
+- **Visual Balance**: Consistent spacing maintains professional appearance across all configurations
 
 ## Browser Compatibility
 
